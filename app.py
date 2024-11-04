@@ -2,7 +2,6 @@ import torch
 from diffusers.utils import load_image
 from diffusers import FluxControlNetModel
 from diffusers import FluxControlNetPipeline
-import os
 from io import BytesIO
 import base64
 
