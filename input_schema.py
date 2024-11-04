@@ -25,25 +25,25 @@ INPUT_SCHEMA = {
     },
     "negative_prompt": {
         'datatype': 'STRING',
-        'required': False,
+        'required': True,
         'shape': [1],
         'example': ["No missing lines"]
     },
     "controlnet_conditioning_scale": {
         'datatype': 'FP64',
-        'required': False,
+        'required': True,
         'shape': [1],
         'example': [0.7]
     },
     "num_inference_steps": {
         'datatype': 'INT64',
-        'required': False,
+        'required': True,
         'shape': [1],
         'example': [50]
     },
     "guidance_scale": {
         'datatype': 'FP64',
-        'required': False,
+        'required': True,
         'shape': [1],
         'example': [7.5]
     },
