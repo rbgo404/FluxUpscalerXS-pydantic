@@ -1,1 +1,1 @@
-# FluxUpscalerXS
+# Model Template - FluxUpscalerXS
