@@ -5,3 +5,5 @@ build:
     - transformers==4.43.4
     - diffusers==0.31.0
     - torch==2.4.0
+    - protobuf==3.20.1
+    - sentencepiece==0.2.0
