@@ -71,7 +71,7 @@ class InferlessPythonModel:
         )
         
         w, h = control_image.size
-        control_image = control_image.resize((w * upscale_factor, h * upscale_factor))
+        control_image = control_image.resize((w * request.upscale_factor, h * request.upscale_factor))
         
         generator = torch.Generator().manual_seed(request.seed)
         
