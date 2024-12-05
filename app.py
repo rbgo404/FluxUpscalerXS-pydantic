@@ -24,14 +24,10 @@ class RequestObjects(BaseModel):
 class ResponseObjects(BaseModel):
         generated_image_base64: str = Field(default='Test output')
 
-
-
 class InferlessPythonModel:
     @staticmethod
-    def process_input_image(input_image, upscale_factor, max_dimension):
-    
+    def process_input_image(input_image, upscale_factor, max_dimension):    
         MAX_PIXEL_BUDGET = max_dimension * max_dimension
-        
         w, h = input_image.size
         w_original, h_original = w, h
         aspect_ratio = w / h
@@ -39,14 +35,6 @@ class InferlessPythonModel:
         was_resized = False
     
         if w * h * upscale_factor**2 > MAX_PIXEL_BUDGET:
-            print(
-                f"Requested output image is too large ({w * upscale_factor}x{h * upscale_factor}). Resizing to ({int(aspect_ratio * MAX_PIXEL_BUDGET ** 0.5 // upscale_factor), int(MAX_PIXEL_BUDGET ** 0.5 // aspect_ratio // upscale_factor)}) pixels.",
-                flush=True
-            )
-            print(
-                f"Requested output image is too large ({w * upscale_factor}x{h * upscale_factor}). Resizing input to ({int(aspect_ratio * MAX_PIXEL_BUDGET ** 0.5 // upscale_factor), int(MAX_PIXEL_BUDGET ** 0.5 // aspect_ratio // upscale_factor)}) pixels budget.",
-                flush=True
-            )
             input_image = input_image.resize(
                 (
                     int(aspect_ratio * MAX_PIXEL_BUDGET**0.5 // upscale_factor),
@@ -71,10 +59,8 @@ class InferlessPythonModel:
         pipe = FluxControlNetPipeline.from_pretrained(base_model, controlnet=controlnet, torch_dtype=torch.bfloat16, use_safetensors=True)
         pipe.vae.enable_slicing()
         pipe.vae.enable_tiling()
-        
         self.model = pipe
         self.model.to(device) # move model to device
-
 
     def infer(self, request: RequestObjects) -> ResponseObjects:
         control_image = load_image(
@@ -84,13 +70,8 @@ class InferlessPythonModel:
         control_image, request.upscale_factor, request.max_dimension
         )
         
-        print("was_resized >>> ", was_resized,flush=True)
-        
-        # rescale with upscale factor
         w, h = control_image.size
         control_image = control_image.resize((w * upscale_factor, h * upscale_factor))
-        
-        print("control_image after resizing >>> ", control_image,flush=True)
         
         generator = torch.Generator().manual_seed(request.seed)
         
@@ -106,18 +87,13 @@ class InferlessPythonModel:
         generator=generator,
         ).images[0]
         
-        if was_resized:
-            print(
-            f"Resizing output image to targeted {w_original * upscale_factor}x{h_original * upscale_factor} size.",flush=True
-            )
-        
         output_image = output_image.resize((w_original * upscale_factor, h_original * upscale_factor))
         buff = BytesIO()
         output_image.save(buff, format="JPEG")
         img_str = base64.b64encode(buff.getvalue()).decode()
 
-        generateObject = ResponseObjects(generated_text = result_output[0])        
+        generateObject = ResponseObjects(generated_image_base64 = img_str)
         return generateObject
-          
+
     def finalize(self):
         self.model = None
