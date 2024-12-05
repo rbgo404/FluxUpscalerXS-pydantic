@@ -4,6 +4,26 @@ from diffusers import FluxControlNetModel
 from diffusers import FluxControlNetPipeline
 from io import BytesIO
 import base64
+import inferless
+from pydantic import BaseModel, Field
+from typing import Optional
+
+@inferless.request
+class RequestObjects(BaseModel):
+        prompt: str = Field(default="Soft and Natural")
+        negative_prompt: str = Field(default="No missing lines")
+        controlnet_conditioning_scale:float = Field(default=0.7)
+        num_inference_steps:int = Field(default=50)
+        guidance_scale:float = Field(default=7.5)
+        image_url: str = Field(default="https://huggingface.co/jasperai/Flux.1-dev-Controlnet-Upscaler/resolve/main/examples/input.jpg")
+        upscale_factor: int = Field(default=4)
+        max_dimension: int = Field(default=2048)
+        seed:int = Field(default=42)
+
+@inferless.response
+class ResponseObjects(BaseModel):
+        generated_image_base64: str = Field(default='Test output')
+
 
 
 class InferlessPythonModel:
@@ -56,15 +76,12 @@ class InferlessPythonModel:
         self.model.to(device) # move model to device
 
 
-    def infer(self, inputs):
+    def infer(self, request: RequestObjects) -> ResponseObjects:
         control_image = load_image(
-        inputs["image_url"]
-        )
-        upscale_factor = int(inputs["upscale_factor"])
-        max_dimension = int(inputs["max_dimension"])
-        
+        request.image_url
+        )        
         control_image, w_original, h_original, was_resized = self.process_input_image(
-        control_image, upscale_factor, max_dimension
+        control_image, request.upscale_factor, request.max_dimension
         )
         
         print("was_resized >>> ", was_resized,flush=True)
@@ -75,17 +92,15 @@ class InferlessPythonModel:
         
         print("control_image after resizing >>> ", control_image,flush=True)
         
-        # Create a seed
-        seed = int(inputs["seed"])
-        generator = torch.Generator().manual_seed(seed)
+        generator = torch.Generator().manual_seed(request.seed)
         
         output_image = self.model(
-        prompt=inputs["prompt"], 
-        prompt_2=inputs["negative_prompt"], 
+        prompt=request.prompt, 
+        prompt_2=request.negative_prompt, 
         control_image=control_image,
-        controlnet_conditioning_scale=float(inputs["controlnet_conditioning_scale"]),
-        num_inference_steps=int(inputs["num_inference_steps"]), 
-        guidance_scale=float(inputs["guidance_scale"]),
+        controlnet_conditioning_scale=request.controlnet_conditioning_scale,
+        num_inference_steps=request.num_inference_steps, 
+        guidance_scale=request.guidance_scale,
         height=control_image.size[1],
         width=control_image.size[0],
         generator=generator,
@@ -101,7 +116,8 @@ class InferlessPythonModel:
         output_image.save(buff, format="JPEG")
         img_str = base64.b64encode(buff.getvalue()).decode()
 
-        return {"generated_image_base64": img_str}
+        generateObject = ResponseObjects(generated_text = result_output[0])        
+        return generateObject
           
     def finalize(self):
         self.model = None
