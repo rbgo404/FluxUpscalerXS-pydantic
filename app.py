@@ -87,7 +87,7 @@ class InferlessPythonModel:
         generator=generator,
         ).images[0]
         
-        output_image = output_image.resize((w_original * upscale_factor, h_original * upscale_factor))
+        output_image = output_image.resize((w_original * request.upscale_factor, h_original * request.upscale_factor))
         buff = BytesIO()
         output_image.save(buff, format="JPEG")
         img_str = base64.b64encode(buff.getvalue()).decode()
